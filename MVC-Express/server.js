@@ -11,19 +11,6 @@ const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
 const app = express();
 app.use(express.json());
 
-// Debug route to see what Vercel passes to Express
-app.use((req, res, next) => {
-  if (req.url.includes("debug") || req.path.includes("debug")) {
-    return res.json({
-      url: req.url,
-      originalUrl: req.originalUrl,
-      path: req.path,
-      headers: req.headers
-    });
-  }
-  next();
-});
-
 // Reusable connection middleware for serverless invocations
 app.use(async (req, res, next) => {
   if (MONGO_URI) {
@@ -58,13 +45,7 @@ app.use("/api/v1/movies", movieRoutes);
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({
-    message: "Route Not Found",
-    url: req.url,
-    originalUrl: req.originalUrl,
-    path: req.path,
-    baseUrl: req.baseUrl
-  });
+  res.status(404).json({ message: "Route Not Found" });
 });
 
 // Error handling middleware
