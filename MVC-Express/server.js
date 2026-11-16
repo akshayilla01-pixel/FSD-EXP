@@ -58,7 +58,13 @@ app.use("/api/v1/movies", movieRoutes);
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ message: "Route Not Found" });
+  res.status(404).json({
+    message: "Route Not Found",
+    url: req.url,
+    originalUrl: req.originalUrl,
+    path: req.path,
+    baseUrl: req.baseUrl
+  });
 });
 
 // Error handling middleware
