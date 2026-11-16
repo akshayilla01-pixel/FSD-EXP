@@ -1,4 +1,8 @@
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+import connectDB from "./config/db.js";
 import {
   createProduct,
   readProducts,
@@ -8,20 +12,40 @@ import {
   deleteProduct,
   createProductForm,
 } from "./controllers/productController.js";
-import dotenv from "dotenv";
-import connectDB from "./config/db.js";
 
 dotenv.config();
-await connectDB(process.env.MONGO_URI, process.env.DB_NAME);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
-app.use(express.json());
-
 const PORT = process.env.PORT || 9500;
+const mongoURI = process.env.MONGO_URI || process.env.MONGODB_URI;
+const dbName = process.env.DB_NAME || "productsDB";
 
+// Set up EJS view engine and explicit views directory path
 app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// Static files
+app.use(express.static(path.join(__dirname, "public")));
+
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//CRUD operations for products
+// Reusable connection middleware for serverless invocations
+app.use(async (req, res, next) => {
+  if (mongoURI) {
+    try {
+      await connectDB(mongoURI, dbName);
+    } catch (err) {
+      console.error("DB connection error in request:", err);
+    }
+  }
+  next();
+});
+
+// CRUD operations for products
 // Route to render the product form for adding a new product
 app.get("/product-form", createProductForm);
 // Route to handle adding a new product
@@ -40,6 +64,21 @@ app.post("/add-product/:id", updateProduct);
 // Route to handle deleting a product
 app.get("/delete-product/:id", deleteProduct);
 
-app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
+// 404 handler
+app.use((req, res) => {
+  res.status(404).render("error", { error: "Page Not Found (404)" });
 });
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack || err.message);
+  res.status(err.status || 500).render("error", { error: err.message || "Internal Server Error" });
+});
+
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
+  });
+}
+
+export default app;

@@ -9,6 +9,12 @@
   <h1>Products CRUD</h1>
   <a href="/product-form">Add a New Product</a>
   <br><br>
+  <% if (typeof notice !== 'undefined' && notice) { %>
+    <p style="color: #666; font-style: italic;"><%= notice %></p>
+  <% } %>
+  <% if (products.length === 0 && (typeof notice === 'undefined' || !notice)) { %>
+    <p>No products found in the catalog.</p>
+  <% } %>
   <div style="display: flex; flex-wrap: wrap; gap: 10px;"> 
   <% products.forEach(product => { %>
     <div style="border: 1px solid #000; padding: 10px; margin: 10px;
